@@ -7,16 +7,19 @@
 #include <thread>
 
 #include "aligned.h"
-#include "chunk_processor.h"
+#include "audio_recorder.h"  // New class replacing ChunkProcessor
 
 struct SpeechRecorderCallbackData {
   std::string event = "";
   std::vector<short> audio;
-  bool speaking = false;
   double volume = 0.0;
-  bool speech = false;
-  double probability = 0.0;
-  int consecutiveSilence = 0;
+};
+
+struct SimplifiedOptions {
+  int device;
+  int samplesPerFrame;
+  int sampleRate;
+  std::function<void(std::vector<short>, double)> onAudio;
 };
 
 class SpeechRecorder : public Napi::ObjectWrap<SpeechRecorder> {
@@ -28,12 +31,9 @@ class SpeechRecorder : public Napi::ObjectWrap<SpeechRecorder> {
   Napi::FunctionReference callback_;
   std::function<void(Napi::Env, Napi::Function, SpeechRecorderCallbackData*)>
       threadSafeFunctionCallback_;
-  std::string modelPath_;
-  speechrecorder::ChunkProcessorOptions options_;
-  speechrecorder::ChunkProcessor processor_;
-  std::unique_ptr<speechrecorder::ChunkProcessor> processFileProcessor_;
+  SimplifiedOptions options_;
+  AudioRecorder processor_;
 
-  void ProcessFile(const Napi::CallbackInfo& info);
   void Start(const Napi::CallbackInfo& info);
   void Stop(const Napi::CallbackInfo& info);
 
